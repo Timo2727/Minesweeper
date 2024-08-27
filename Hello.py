@@ -48,3 +48,5 @@ for row in range(height):
 			neighbours = [i[column-radarsize if column-radarsize>0 else 0:column+radarsize+1] for i in board[row-radarsize if row-radarsize>0 else 0:row+radarsize+1]]
 			board[row][column] = sum(x.count("M") for x in neighbours)
 printboard()
+print("hello world")
+print("doing")
