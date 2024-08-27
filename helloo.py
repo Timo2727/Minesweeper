@@ -1,9 +1,4 @@
-import math, tkinter, random, colorama
-width=40
-height=25
-totalmines=30
-board=[[0 for x in range(width)] for i in range(height)]
-radarsize=2
+board=[[2,7,4,9,2,3],[1,4,8,4,9,2],[7,5,9,0,6,7],[2,5,4,7,2,3],[6,7,8,0,4,3]]
 
 def printboard():
     COLORS = {
@@ -25,14 +20,4 @@ def printboard():
             color = COLORS.get(item, '')  # Default to no color if item is not in COLORS
             formatted_row.append(f"{color}{item}{RESET}")
         print(' '.join(formatted_row))
-
-for i in random.sample(range(width*height),totalmines):
-    board[i//width][i%width]= "M"
-
-for row in range(height):
-	for column in range(width):
-		if board[row][column]!="M":
-            
-			neighbours = [i[column-radarsize if column-radarsize>0 else 0:column+radarsize+1] for i in board[row-radarsize if row-radarsize>0 else 0:row+radarsize+1]]
-			board[row][column] = sum(x.count("M") for x in neighbours)
 printboard()
