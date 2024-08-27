@@ -49,4 +49,4 @@ for row in range(height):
 			board[row][column] = sum(x.count("M") for x in neighbours)
 printboard()
 print("hello world")
-print("doing")
+print("vvvvvvv")
