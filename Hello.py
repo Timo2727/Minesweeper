@@ -1,9 +1,21 @@
-import math, tkinter, random, colorama
+import math, random
+import tkinter as tk
+from tkinter import ttk
+
+
+window = tk.Tk()
+window.title("demo")
+window.geometry("300x150")
+
+title_label = ttk.Label(master=window, text="Miles to kilometers")
+
+window.mainloop()
+
 width=40
 height=25
 totalmines=30
 board=[[0 for x in range(width)] for i in range(height)]
-radarsize=2
+radarsize=1
 
 def printboard():
     COLORS = {
