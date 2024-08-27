@@ -1,15 +1,5 @@
 import math, random
-import tkinter as tk
-from tkinter import ttk
 
-
-window = tk.Tk()
-window.title("demo")
-window.geometry("300x150")
-
-title_label = ttk.Label(master=window, text="Miles to kilometers")
-
-window.mainloop()
 
 width=40
 height=25
@@ -34,7 +24,7 @@ def printboard():
     for row in board:
         formatted_row = []
         for item in row:
-            color = COLORS.get(item, '')  # Default to no color if item is not in COLORS
+            color = COLORS.get(item, '')
             formatted_row.append(f"{color}{item}{RESET}")
         print(' '.join(formatted_row))
 
@@ -48,5 +38,3 @@ for row in range(height):
 			neighbours = [i[column-radarsize if column-radarsize>0 else 0:column+radarsize+1] for i in board[row-radarsize if row-radarsize>0 else 0:row+radarsize+1]]
 			board[row][column] = sum(x.count("M") for x in neighbours)
 printboard()
-print("hello world")
-print("fffffff")
