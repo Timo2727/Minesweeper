@@ -113,3 +113,5 @@ printboard()
 
 
 window.mainloop()
+
+print("This is main")
