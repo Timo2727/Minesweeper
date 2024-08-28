@@ -25,14 +25,16 @@ lable_list=[]
 
 button_width = 30
 button_height = 30
-rows = 6
-cols = 6
+rows = 7
+cols = 7
 window.geometry(str(str(cols*button_width)+"x"+str(rows*button_height)))
 
 radarsize=1
 totalmines=28
+mineremain=totalmines
 board=[[0 for x in range(cols)] for i in range(rows)]
 started=False
+buttonsopen=0
 
 
 
@@ -66,12 +68,21 @@ def quit(e):
      window.destroy()
 window.bind('<Control-c>', quit)
 
-#LAnded on a mine
-def expl():
+#Landed on a mine
+def loose():
     print("you loose")
+    for i in button_list:
+        i.config(state=tk.DISABLED) 
+    tk.Label(window,text= "YOU LOOSE", font="Calibri 16 bold", bg= "red").pack(anchor="center")
 
-
-
+#Won the game
+def win():
+    print("you win!")
+    for i in button_list:
+        i.config(state=tk.DISABLED) 
+    tk.Label(window,text= "YOU WIN!", font="Calibri 16 bold", bg= "green").pack(anchor="center")
+     
+    
 
 #if first click is a mine
 def startclick(index):
@@ -89,27 +100,43 @@ def startclick(index):
 #if cover clicked               
 def hidebutton(index):
     global started
+    global mineremain
+    global buttonsopen
     if button_list[index].cget("bg")!="red":
+ 
+
         button_list[index].place_forget()
+        buttonsopen+=1
         if board[index//cols][index%cols]!="M":
             started=True
         elif started:
-            expl()
+            loose()
+            lost=True
         else:
             started=True
             startclick(index)
         printboard()
         print()
+        if cols*rows-buttonsopen==totalmines and not "lost" in locals():
+            win() 
+
+
     else:
         button_list[index].configure(bg="SystemButtonFace", text="")
+        mineremain+=1
+    print(mineremain)
     
 
 #(FLAG) if cover right-clicked
 def right_click(event):
+    global mineremain
     if event.widget.cget("bg")!="red":
         event.widget.configure(bg="red", text="F")
+        mineremain-=1
     else:
         event.widget.configure(bg="SystemButtonFace", text="")
+        mineremain+=1
+    print(mineremain)
 
 
 def calc():
