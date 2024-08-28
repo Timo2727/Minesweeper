@@ -1,43 +1,47 @@
 import tkinter as tk
 import math, random
 
-window = tk.Tk()
-window.title("MINESWEEPER")
+#config variables
+rows = 16
+cols = 16
+radarsize=1
+totalmines=28
 
-window.geometry("400x400")
+#scale variables
+button_width = 30
+button_height = 30
 
-tk.Label(window,text="Board Dimensions").pack()
-tk.Label(window,text="x").pack(side="right")
-dim_inp=tk.Entry(window)
-dim_inp.pack()
-
-var=tk.IntVar()
-start=tk.Button(window, text="Play!", command=lambda: var.set(1))
-start.pack() 
-
-#start.wait_variable(var)
-
-
+#empty list definitions
 button_list = []
 field_list=[]
 lable_list=[]
-
-
-button_width = 30
-button_height = 30
-rows = 7
-cols = 7
-window.geometry(str(str(cols*button_width)+"x"+str(rows*button_height)))
-
-radarsize=1
-totalmines=28
-mineremain=totalmines
 board=[[0 for x in range(cols)] for i in range(rows)]
+
+#tag variable definitions
+mineremain=totalmines
 started=False
 buttonsopen=0
 
+#Window setup
+window = tk.Tk()
+window.title("MINESWEEPER")
 
 
+#menu screen to configure game settings
+def menu():
+    window.geometry("400x400")
+
+    tk.Label(window,text="Board Dimensions").pack()
+    tk.Label(window,text="x").pack(side="right")
+    dim_inp=tk.Entry(window)
+    dim_inp.pack()
+
+    var=tk.IntVar()
+    start=tk.Button(window, text="Play!", command=lambda: var.set(1))
+    start.pack() 
+
+    start.wait_variable(var)
+    startgame()
 
 
 
@@ -62,6 +66,7 @@ def printboard():
             color = COLORS.get(item, '') if item == "M" else '\033[37m'
             formatted_row.append(f"{color}{item}{RESET}")
         print(' '.join(formatted_row))
+    print()
 
 #quit keyboard shortcut
 def quit(e):
@@ -69,11 +74,11 @@ def quit(e):
 window.bind('<Control-c>', quit)
 
 #Landed on a mine
-def loose():
-    print("you loose")
+def lose():
+    print("you lose")
     for i in button_list:
         i.config(state=tk.DISABLED) 
-    tk.Label(window,text= "YOU LOOSE", font="Calibri 16 bold", bg= "red").pack(anchor="center")
+    tk.Label(window,text= "YOU LOSE", font="Calibri 16 bold", bg= "red").pack(anchor="center")
 
 #Won the game
 def win():
@@ -82,10 +87,9 @@ def win():
         i.config(state=tk.DISABLED) 
     tk.Label(window,text= "YOU WIN!", font="Calibri 16 bold", bg= "green").pack(anchor="center")
      
-    
 
 #if first click is a mine
-def startclick(index):
+def first_click_guard(index):
     stop=False
     for y in range(rows):
         for x in range(cols):
@@ -95,34 +99,40 @@ def startclick(index):
                 break
         if stop: break
     board[index//cols][index%cols]=0   
-    calc()
+    calc_neighbours()
+    update_field_values()
+
+#function that opens all buttons covering neighboring 0s if source is 0
+def zero_fill(sourcei, sourcey, sourcex):
+    pass #TODO
 
 #if cover clicked               
-def hidebutton(index):
+def button_left_clicked(index):
     global started
     global mineremain
     global buttonsopen
-    if button_list[index].cget("bg")!="red":
+    if button_list[index].cget("text")!="⚑":
  
 
         button_list[index].place_forget()
         buttonsopen+=1
         if board[index//cols][index%cols]!="M":
             started=True
+            if board[index//cols][index%cols]==0:
+                zero_fill(index, index//cols, index%cols)
         elif started:
-            loose()
+            lose()
             lost=True
         else:
             started=True
-            startclick(index)
+            first_click_guard(index)
         printboard()
-        print()
         if cols*rows-buttonsopen==totalmines and not "lost" in locals():
             win() 
 
 
     else:
-        button_list[index].configure(bg="SystemButtonFace", text="")
+        button_list[index].configure(text="")
         mineremain+=1
     print(mineremain)
     
@@ -130,16 +140,16 @@ def hidebutton(index):
 #(FLAG) if cover right-clicked
 def right_click(event):
     global mineremain
-    if event.widget.cget("bg")!="red":
-        event.widget.configure(bg="red", text="F")
+    if event.widget.cget("text")!="⚑":
+        event.widget.configure(fg="red", text="⚑", font=("Calibri", '15'))
         mineremain-=1
     else:
-        event.widget.configure(bg="SystemButtonFace", text="")
+        event.widget.configure(text="")
         mineremain+=1
     print(mineremain)
 
 
-def calc():
+def calc_neighbours():
     #calculate neighbour values in board list
     for row in range(rows):
         for column in range(cols):
@@ -148,6 +158,7 @@ def calc():
                 neighbours = [i[column-radarsize if column-radarsize>0 else 0:column+radarsize+1] for i in board[row-radarsize if row-radarsize>0 else 0:row+radarsize+1]]
                 board[row][column] = sum(x.count("M") for x in neighbours)
 
+def update_field_values():
     #update tkinter frames to match board values             
     for y in range(rows):
         for x in range(cols):
@@ -155,47 +166,51 @@ def calc():
             lable_list[index].configure(text=board[y][x])
 
 
-
-
-
-
-
-
 #distribute Mines
-for i in random.sample(range(cols*rows),totalmines):
-    board[i//cols][i%cols]= "M"
+def distribute_mines():
+    for i in random.sample(range(cols*rows),totalmines):
+        board[i//cols][i%cols]= "M"
 
 
 #Tkinter render board field values as tkinter frames
-for y in range(rows):
-    for x in range(cols):
-        index = y * cols + x
-        x_pos = x * button_width
-        y_pos = y * button_height
-        
-        field = tk.Frame(window, highlightthickness=1, highlightbackground="#d4d4d4")
-        field.place(x=x_pos, y=y_pos, width=button_width, height=button_height)
-        lable = tk.Label(field, text=board[y][x], font="Calibri 16 bold")
-        lable.pack()
-        field_list.append(field)
-        lable_list.append(lable)
+def populate_values():
+    for y in range(rows):
+        for x in range(cols):
+            index = y * cols + x
+            x_pos = x * button_width
+            y_pos = y * button_height
+            
+            field = tk.Frame(window, highlightthickness=1, highlightbackground="#d4d4d4")
+            field.place(x=x_pos, y=y_pos, width=button_width, height=button_height)
+            lable = tk.Label(field, text=board[y][x], font="Calibri 16 bold")
+            lable.pack()
+            field_list.append(field)
+            lable_list.append(lable)
 
 #Tkinter render cover Buttons
-for y in range(rows):
-    for x in range(cols):
-        index = y * cols + x
-        x_pos = x * button_width
-        y_pos = y * button_height
-        button = tk.Button(window, borderwidth=4 ,command=lambda idx=index: hidebutton(idx))
-        button.place(x=x_pos, y=y_pos, width=button_width, height=button_height)
-        button.bind("<Button-2>", right_click)
-        button.bind("<Button-3>", right_click)
-        button_list.append(button)
+def populate_covers(target="all"):
+    for y in range(rows):
+        for x in range(cols):
+            index = y * cols + x
+            x_pos = x * button_width
+            y_pos = y * button_height
+            button = tk.Button(window, borderwidth=4 ,command=lambda idx=index: button_left_clicked(idx))
+            button.place(x=x_pos, y=y_pos, width=button_width, height=button_height)
+            button.bind("<Button-2>", right_click)
+            button.bind("<Button-3>", right_click)
+            button_list.append(button)
+
+def startgame():
+    window.geometry(str(str(cols*button_width)+"x"+str(rows*button_height)))
+    distribute_mines()
+    populate_values()
+    populate_covers() 
+    printboard()
+    calc_neighbours()
+    update_field_values()
+
+menu()
 
 
-
-printboard()
-print()
-calc()
 
 window.mainloop()
