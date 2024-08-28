@@ -25,14 +25,14 @@ lable_list=[]
 
 button_width = 30
 button_height = 30
-rows = 18
-cols = 15
+rows = 6
+cols = 6
 window.geometry(str(str(cols*button_width)+"x"+str(rows*button_height)))
 
 radarsize=1
-totalmines=90
+totalmines=28
 board=[[0 for x in range(cols)] for i in range(rows)]
-
+started=False
 
 
 
@@ -73,34 +73,36 @@ def expl():
 
 
 
-
-
-started=False
+#if first click is a mine
+def startclick(index):
+    stop=False
+    for y in range(rows):
+        for x in range(cols):
+            if board[y][x]!="M":
+                board[y][x]="M"
+                stop=True
+                break
+        if stop: break
+    board[index//cols][index%cols]=0   
+    calc()
 
 #if cover clicked               
 def hidebutton(index):
+    global started
     if button_list[index].cget("bg")!="red":
         button_list[index].place_forget()
         if board[index//cols][index%cols]!="M":
-            global started
             started=True
         elif started:
-            print("you loose")
+            expl()
         else:
-            for y in range(rows):
-                for x in range(cols):
-                    if board[y][x]!="M":
-                        board[y][x]="M"
-                        stop=True
-                        break
-                if stop: break
-            board[index//cols][index%cols]=0     
-            calc()
-
+            started=True
+            startclick(index)
+        printboard()
+        print()
     else:
         button_list[index].configure(bg="SystemButtonFace", text="")
-    printboard()
-    print()
+    
 
 #(FLAG) if cover right-clicked
 def right_click(event):
@@ -110,6 +112,24 @@ def right_click(event):
         event.widget.configure(bg="SystemButtonFace", text="")
 
 
+def calc():
+    #calculate neighbour values in board list
+    for row in range(rows):
+        for column in range(cols):
+            if board[row][column]!="M":
+                
+                neighbours = [i[column-radarsize if column-radarsize>0 else 0:column+radarsize+1] for i in board[row-radarsize if row-radarsize>0 else 0:row+radarsize+1]]
+                board[row][column] = sum(x.count("M") for x in neighbours)
+
+    #update tkinter frames to match board values             
+    for y in range(rows):
+        for x in range(cols):
+            index = y * cols + x
+            lable_list[index].configure(text=board[y][x])
+
+
+
+
 
 
 
@@ -117,11 +137,6 @@ def right_click(event):
 #distribute Mines
 for i in random.sample(range(cols*rows),totalmines):
     board[i//cols][i%cols]= "M"
-
-
-
-
-
 
 
 #Tkinter render board field values as tkinter frames
@@ -150,25 +165,10 @@ for y in range(rows):
         button.bind("<Button-3>", right_click)
         button_list.append(button)
 
+
+
 printboard()
 print()
-
-def calc():
-    #calculate neighbour values
-    for row in range(rows):
-        for column in range(cols):
-            if board[row][column]!="M":
-                
-                neighbours = [i[column-radarsize if column-radarsize>0 else 0:column+radarsize+1] for i in board[row-radarsize if row-radarsize>0 else 0:row+radarsize+1]]
-                board[row][column] = sum(x.count("M") for x in neighbours)
-
-    #update Fields after Mine-displace              
-    for y in range(rows):
-        for x in range(cols):
-            index = y * cols + x
-            lable_list[index].configure(text=board[y][x])
 calc()
 
 window.mainloop()
-
-
