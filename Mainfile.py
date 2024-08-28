@@ -1,5 +1,5 @@
 import tkinter as tk
-import math, random
+import math, random, copy
 
 #config variables
 rows = 16
@@ -13,9 +13,12 @@ button_height = 30
 
 #empty list definitions
 button_list = []
+button_coor_list= [[0 for x in range(cols)] for i in range(rows)]
 field_list=[]
 lable_list=[]
 board=[[0 for x in range(cols)] for i in range(rows)]
+playboard=[]
+
 
 #tag variable definitions
 mineremain=totalmines
@@ -46,7 +49,7 @@ def menu():
 
 
 #print board troubleshooting function
-def printboard():
+def printboard(target=board):
     COLORS = {
         1:  '\033[34m',  # Blue
         2:  '\033[32m',  # Green
@@ -60,7 +63,7 @@ def printboard():
     }
     RESET = '\033[0m'
     
-    for row in board:
+    for row in target:
         formatted_row = []
         for item in row:
             color = COLORS.get(item, '') if item == "M" else '\033[37m'
@@ -102,15 +105,42 @@ def first_click_guard(index):
     calc_neighbours()
     update_field_values()
 
-#function that opens all buttons covering neighboring 0s if source is 0
-def zero_fill(sourcei, sourcey, sourcex):
-    pass #TODO
+
+
+
+
+#recursive function that opens all buttons covering neighboring 0s if source is 0
+def zero_fill(sourcey, sourcex):
+    global recursions
+    recursions+=1
+    playboard[sourcey][sourcex]="f"
+    neighbour_values = [i[sourcex-radarsize if sourcex-radarsize>0 else 0:sourcex+radarsize+1] for i in playboard[sourcey-radarsize if sourcey-radarsize>0 else 0:sourcey+radarsize+1]]
+    #neighbour_buttons = [i[sourcex-radarsize if sourcex-radarsize>0 else 0:sourcex+radarsize+1] for i in button_coor_list[sourcey-radarsize if sourcey-radarsize>0 else 0:sourcey+radarsize+1]]
+    for row, valuerow in enumerate(neighbour_values):
+        for column, value in enumerate(valuerow):
+            if recursions > 500:
+                pass
+            elif value==0:
+                zero_fill(sourcey+row-radarsize, sourcex+column-radarsize)
+
+
+
+
+
+
+
+
+
+
+
 
 #if cover clicked               
 def button_left_clicked(index):
     global started
     global mineremain
     global buttonsopen
+    global playboard
+    global recursions
     if button_list[index].cget("text")!="⚑":
  
 
@@ -119,7 +149,10 @@ def button_left_clicked(index):
         if board[index//cols][index%cols]!="M":
             started=True
             if board[index//cols][index%cols]==0:
-                zero_fill(index, index//cols, index%cols)
+                playboard = board.copy()
+                recursions=0
+                zero_fill(index//cols, index%cols)
+                printboard(target=playboard)
         elif started:
             lose()
             lost=True
@@ -148,9 +181,8 @@ def right_click(event):
         mineremain+=1
     print(mineremain)
 
-
+#calculate neighbour values in board list
 def calc_neighbours():
-    #calculate neighbour values in board list
     for row in range(rows):
         for column in range(cols):
             if board[row][column]!="M":
@@ -158,8 +190,8 @@ def calc_neighbours():
                 neighbours = [i[column-radarsize if column-radarsize>0 else 0:column+radarsize+1] for i in board[row-radarsize if row-radarsize>0 else 0:row+radarsize+1]]
                 board[row][column] = sum(x.count("M") for x in neighbours)
 
-def update_field_values():
-    #update tkinter frames to match board values             
+#update tkinter frames to match board values  
+def update_field_values():            
     for y in range(rows):
         for x in range(cols):
             index = y * cols + x
@@ -199,6 +231,7 @@ def populate_covers(target="all"):
             button.bind("<Button-2>", right_click)
             button.bind("<Button-3>", right_click)
             button_list.append(button)
+            button_coor_list[y][x]=button
 
 def startgame():
     window.geometry(str(str(cols*button_width)+"x"+str(rows*button_height)))
@@ -209,7 +242,7 @@ def startgame():
     calc_neighbours()
     update_field_values()
 
-menu()
+startgame()
 
 
 
