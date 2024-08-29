@@ -1,11 +1,11 @@
 import tkinter as tk
-import math, random, copy
+import math, random,copy
 
 #config variables
-rows = 16
-cols = 16
+rows = 10
+cols = 10
 radarsize=1
-totalmines=28
+totalmines=10
 
 #scale variables
 button_width = 30
@@ -112,62 +112,76 @@ def first_click_guard(index):
 #recursive function that opens all buttons covering neighboring 0s if source is 0
 def zero_fill(sourcey, sourcex):
     global recursions
-    recursions+=1
-    playboard[sourcey][sourcex]="f"
-    neighbour_values = [i[sourcex-radarsize if sourcex-radarsize>0 else 0:sourcex+radarsize+1] for i in playboard[sourcey-radarsize if sourcey-radarsize>0 else 0:sourcey+radarsize+1]]
-    #neighbour_buttons = [i[sourcex-radarsize if sourcex-radarsize>0 else 0:sourcex+radarsize+1] for i in button_coor_list[sourcey-radarsize if sourcey-radarsize>0 else 0:sourcey+radarsize+1]]
-    for row, valuerow in enumerate(neighbour_values):
-        for column, value in enumerate(valuerow):
-            if recursions > 500:
-                pass
-            elif value==0:
-                zero_fill(sourcey+row-radarsize, sourcex+column-radarsize)
+    global playboard
+    playboard = copy.deepcopy(board)
+    recursions = 0  # Reset recursions counter
+    stack = [(sourcey, sourcex)]  # Initialize stack with the starting cell
+
+    while stack:
+        sy, sx = stack.pop()
+        if recursions > 500:
+            continue
+
+        playboard[sy][sx] = "f"
+        recursions += 1
+
+        # Define the range for the neighbors
+        start_y = max(sy - radarsize, 0)
+        end_y = min(sy + radarsize + 1, len(playboard))
+        start_x = max(sx - radarsize, 0)
+        end_x = min(sx + radarsize + 1, len(playboard[0]))
+
+        for y in range(start_y, end_y):
+            for x in range(start_x, end_x):
+                if playboard[y][x] == 0:
+                    # Push the neighbor onto the stack if it's 0
+                    stack.append((y, x))
+                elif playboard[y][x]!="M":
+                    playboard[y][x] = "f"
+    printboard(target=playboard)
+    for y in range(rows):
+        for x in range(cols):
+            if playboard[y][x]=="f" and button_list[y*cols+x].winfo_manager() != '':
+                open_cover(y*cols+x, fill=False)
 
 
 
 
-
-
-
-
-
+def open_cover(index, fill=True):
+    global buttonsopen
+    global started
+    
+    button_list[index].place_forget()
+    buttonsopen+=1
+    if board[index//cols][index%cols]!="M":
+        started=True
+        if board[index//cols][index%cols]==0 and fill:
+            zero_fill(index//cols, index%cols)
+    elif started:
+        lose()
+        lost=True
+    else:
+        started=True
+        first_click_guard(index)
+        if board[index//cols][index%cols]==0 and fill:
+            zero_fill(index//cols, index%cols)
+    printboard()
+    if cols*rows-buttonsopen==totalmines and not "lost" in locals():
+        win() 
 
 
 
 #if cover clicked               
 def button_left_clicked(index):
-    global started
     global mineremain
-    global buttonsopen
-    global playboard
     global recursions
     if button_list[index].cget("text")!="⚑":
- 
-
-        button_list[index].place_forget()
-        buttonsopen+=1
-        if board[index//cols][index%cols]!="M":
-            started=True
-            if board[index//cols][index%cols]==0:
-                playboard = board.copy()
-                recursions=0
-                zero_fill(index//cols, index%cols)
-                printboard(target=playboard)
-        elif started:
-            lose()
-            lost=True
-        else:
-            started=True
-            first_click_guard(index)
-        printboard()
-        if cols*rows-buttonsopen==totalmines and not "lost" in locals():
-            win() 
-
-
+        open_cover(index)
     else:
         button_list[index].configure(text="")
         mineremain+=1
-    print(mineremain)
+    print(buttonsopen)
+
     
 
 #(FLAG) if cover right-clicked
@@ -179,7 +193,6 @@ def right_click(event):
     else:
         event.widget.configure(text="")
         mineremain+=1
-    print(mineremain)
 
 #calculate neighbour values in board list
 def calc_neighbours():
